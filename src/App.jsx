@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { supabase, supabaseConfigured } from './lib/supabase';
 
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
@@ -212,6 +214,48 @@ export default function App() {
     return { monthTransactions, income, expense, opening, closing: opening + income - expense, byCategory, selectedYear, selectedMonth };
   }, [transactions, reportMonth, categoryMap]);
 
+
+  function downloadMonthlyPdf() {
+    const monthLabel = new Date(reportMonth + '-01T00:00:00').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    doc.setFontSize(15);
+    doc.text('LANGGAR WAQAF DARUL FALAH', 14, 15);
+    doc.setFontSize(10);
+    doc.text('Ledok Kidul Dalem, Bangil', 14, 21);
+    doc.setFontSize(12);
+    doc.text('LAPORAN KAS BULAN ' + monthLabel.toUpperCase(), 14, 30);
+    autoTable(doc, {
+      startY: 36,
+      head: [['Saldo Awal', 'Pemasukan', 'Pengeluaran', 'Saldo Akhir', 'Jumlah Transaksi']],
+      body: [[money.format(monthlyReport.opening), money.format(monthlyReport.income), money.format(monthlyReport.expense), money.format(monthlyReport.closing), String(monthlyReport.monthTransactions.length)]],
+      styles: { fontSize: 9 }
+    });
+    const details = monthlyReport.monthTransactions.map((t, i) => [
+      String(i + 1),
+      dateFmt.format(new Date(t.transaction_date + 'T00:00:00')),
+      t.description || '-',
+      categoryMap.get(String(t.category_id)) || '-',
+      t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+      t.transaction_type === 'income' ? money.format(Number(t.amount || 0)) : '-',
+      t.transaction_type === 'expense' ? money.format(Number(t.amount || 0)) : '-'
+    ]);
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 8,
+      head: [['No', 'Tanggal', 'Keterangan', 'Kategori', 'Jenis', 'Pemasukan', 'Pengeluaran']],
+      body: details.length ? details : [['-', '-', 'Tidak ada transaksi', '-', '-', '-', '-']],
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [20, 83, 45] },
+      columnStyles: { 2: { cellWidth: 62 } }
+    });
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 8,
+      head: [['Kategori', 'Total Pemasukan', 'Total Pengeluaran', 'Selisih']],
+      body: [...monthlyReport.byCategory.entries()].map(([name, value]) => [name, money.format(value.income), money.format(value.expense), money.format(value.income - value.expense)]),
+      styles: { fontSize: 8 }
+    });
+    doc.save('Laporan_Kas_' + reportMonth + '.pdf');
+  }
+
   function downloadMonthlyExcel() {
     const monthLabel = new Date(reportMonth + '-01T00:00:00').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     const workbook = XLSX.utils.book_new();
@@ -293,10 +337,10 @@ export default function App() {
       </section>
       <section className="panel monthly-report-panel">
         <div className="panel-heading">
-          <div><p className="eyebrow">ARSIP DAN LAPORAN</p><h2>Laporan bulanan</h2><p className="muted">Unduh ringkasan, seluruh rincian transaksi, dan rekap kategori dalam satu file Excel.</p></div>
+          <div><p className="eyebrow">ARSIP DAN LAPORAN</p><h2>Laporan bulanan</h2><p className="muted">Rincian transaksi bulan terpilih, lengkap dengan ringkasan dan rekap kategori.</p></div>
           <div className="report-actions">
             <input className="year-select" type="month" value={reportMonth} min="2026-07" onChange={e => setReportMonth(e.target.value)} aria-label="Pilih bulan laporan" />
-            <button className="primary-button" type="button" onClick={downloadMonthlyExcel} disabled={loading}>Download Excel</button>
+            <div className="report-downloads"><button className="primary-button" type="button" onClick={downloadMonthlyPdf} disabled={loading}>Download PDF</button>{isAdmin && <button className="outline-button" type="button" onClick={downloadMonthlyExcel} disabled={loading}>Download Excel</button>}</div>
           </div>
         </div>
         <div className="report-summary-grid">
@@ -305,7 +349,20 @@ export default function App() {
           <div><span>Pengeluaran</span><strong>{money.format(monthlyReport.expense)}</strong></div>
           <div><span>Saldo akhir</span><strong>{money.format(monthlyReport.closing)}</strong></div>
         </div>
-        <p className="muted report-count">{monthlyReport.monthTransactions.length} transaksi tercatat pada bulan ini. Semua rincian akan dimasukkan ke sheet "Rincian Transaksi".</p>
+        <div className="report-detail-heading"><h3>Rincian transaksi bulan ini</h3><span>{monthlyReport.monthTransactions.length} transaksi</span></div>
+        {monthlyReport.monthTransactions.length === 0 ? <div className="empty-state"><p>Belum ada transaksi pada bulan yang dipilih.</p></div> :
+          <div className="table-wrap"><table className="transactions-table">
+            <thead><tr><th>No.</th><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Pemasukan</th><th className="amount-cell">Pengeluaran</th></tr></thead>
+            <tbody>{monthlyReport.monthTransactions.map((t, i) => <tr key={t.id}>
+              <td>{i + 1}</td>
+              <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
+              <td className="description-cell">{t.description || '-'}</td>
+              <td>{categoryMap.get(String(t.category_id)) || '-'}</td>
+              <td><span className={'type-pill ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span></td>
+              <td className="amount-cell">{t.transaction_type === 'income' ? money.format(Number(t.amount) || 0) : '-'}</td>
+              <td className="amount-cell">{t.transaction_type === 'expense' ? money.format(Number(t.amount) || 0) : '-'}</td>
+            </tr>)}</tbody>
+          </table></div>}
       </section>
       <section className="panel">
         <div className="panel-heading">
