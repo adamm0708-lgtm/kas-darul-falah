@@ -69,12 +69,8 @@ export default function App() {
       setLoading(false);
     }
     loadDashboard();
-    const { data: authListener } = supabaseConfigured
-      ? supabase.auth.onAuthStateChange((_event, session) => { verifyAdmin(session); })
-      : { data: { subscription: null } };
     return () => {
       alive = false;
-      authListener?.subscription?.unsubscribe();
     };
   }, []);
 
