@@ -11,6 +11,29 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [year, setYear] = useState('all');
+  const [showLogin, setShowLogin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginMessage, setLoginMessage] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+
+  async function verifyAdmin(session) {
+    if (!session?.user) {
+      setIsAdmin(false);
+      setAdminEmail('');
+      return;
+    }
+    const { data, error: adminError } = await supabase.rpc('is_admin');
+    if (adminError || data !== true) {
+      setIsAdmin(false);
+      setAdminEmail('');
+      return;
+    }
+    setIsAdmin(true);
+    setAdminEmail(session.user.email || '');
+  }
 
   useEffect(() => {
     let alive = true;
@@ -22,9 +45,10 @@ export default function App() {
         return;
       }
       setConnection('Menghubungkan ke Supabase…');
-      const [txResult, catResult] = await Promise.all([
+      const [txResult, catResult, sessionResult] = await Promise.all([
         supabase.from('transactions').select('id, transaction_date, transaction_type, description, amount, category_id').order('transaction_date', { ascending: false }),
-        supabase.from('categories').select('*')
+        supabase.from('categories').select('*'),
+        supabase.auth.getSession()
       ]);
       if (!alive) return;
       if (txResult.error) {
@@ -41,11 +65,50 @@ export default function App() {
       }
       setTransactions(txResult.data ?? []);
       setCategories(catResult.data ?? []);
+      if (sessionResult.data?.session) await verifyAdmin(sessionResult.data.session);
       setLoading(false);
     }
     loadDashboard();
-    return () => { alive = false; };
+    const { data: authListener } = supabaseConfigured
+      ? supabase.auth.onAuthStateChange((_event, session) => { verifyAdmin(session); })
+      : { data: { subscription: null } };
+    return () => {
+      alive = false;
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    setLoginBusy(true);
+    setLoginMessage('');
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (signInError) {
+      setLoginMessage('Login gagal: ' + signInError.message);
+      setLoginBusy(false);
+      return;
+    }
+    const { data: adminResult, error: adminError } = await supabase.rpc('is_admin');
+    if (adminError || adminResult !== true) {
+      await supabase.auth.signOut();
+      setLoginMessage('Akun berhasil masuk, tetapi belum terdaftar sebagai admin. Hubungi pengelola.');
+      setLoginBusy(false);
+      return;
+    }
+    setIsAdmin(true);
+    setAdminEmail(data.user?.email || email.trim());
+    setPassword('');
+    setLoginMessage('Login admin berhasil.');
+    setShowLogin(false);
+    setLoginBusy(false);
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    setIsAdmin(false);
+    setAdminEmail('');
+    setLoginMessage('Anda sudah logout.');
+  }
 
   const categoryMap = useMemo(() => new Map(categories.map(c => [String(c.id), c.name ?? c.category_name ?? c.title ?? 'Kategori'])), [categories]);
   const years = useMemo(() => [...new Set(transactions.map(t => String(t.transaction_date).slice(0, 4)))].sort().reverse(), [transactions]);
@@ -67,8 +130,24 @@ export default function App() {
       </header>
       <section className="intro">
         <div><p className="eyebrow">DASHBOARD KAS</p><h2>Ringkasan keuangan</h2><p className="muted">Transparan, rapi, dan bisa dipantau bersama.</p></div>
-        <span className="muted">{visible.length} transaksi</span>
+        <div className="intro-actions">
+          <span className="muted">{visible.length} transaksi</span>
+          {isAdmin
+            ? <button className="outline-button" onClick={handleLogout}>Logout Admin</button>
+            : <button className="outline-button" onClick={() => { setShowLogin(v => !v); setLoginMessage(''); }}>Masuk Admin</button>}
+        </div>
       </section>
+      {isAdmin && <section className="admin-welcome"><strong>Mode Admin aktif</strong><span>{adminEmail}</span><p>Login berhasil. Fitur pengelolaan transaksi akan ditambahkan pada tahap berikutnya.</p></section>}
+      {showLogin && !isAdmin && <section className="login-panel">
+        <div><p className="eyebrow">AREA PENGELOLA</p><h2>Login Admin</h2><p className="muted">Masuk menggunakan akun admin yang sudah dibuat di Supabase.</p></div>
+        <form className="login-form" onSubmit={handleLogin}>
+          <label>Email admin<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nama@email.com" autoComplete="username" required /></label>
+          <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password akun admin" autoComplete="current-password" required /></label>
+          {loginMessage && <p className="login-message">{loginMessage}</p>}
+          <div className="login-actions"><button className="primary-button" type="submit" disabled={loginBusy}>{loginBusy ? 'Memeriksa…' : 'Login'}</button><button className="cancel-button" type="button" onClick={() => setShowLogin(false)}>Batal</button></div>
+        </form>
+      </section>}
+      {loginMessage && !showLogin && !isAdmin && <p className="login-message">{loginMessage}</p>}
       {error && <section className="notice"><strong>Ada kendala saat memuat data.</strong><p>{error}</p></section>}
       <section className="stats-grid">
         <article className="stat-card balance"><span>Saldo bersih periode</span><strong>{loading ? 'Memuat…' : money.format(balance)}</strong><small>Total pemasukan dikurangi pengeluaran</small></article>
