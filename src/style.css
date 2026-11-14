@@ -13,3 +13,21 @@
 .type-pill.income{background:#e8f5eb;color:#287341}
 .type-pill.expense{background:#fff0ed;color:#a64a36}
 @media(max-width:700px){.panel{padding:16px}.panel-heading{gap:12px;align-items:flex-end}.transactions-table td,.transactions-table th{padding:12px 10px}}
+
+.intro-actions{display:flex;align-items:center;gap:14px}
+.login-panel,.admin-welcome{display:grid;grid-template-columns:1fr 1.2fr;gap:24px;align-items:start;background:#fff;border:1px solid #dfe9e1;border-radius:16px;padding:22px;margin:-4px 0 20px;box-shadow:0 5px 18px #193d2110}
+.login-panel h2{font:800 20px Manrope;margin:0}
+.login-form{display:grid;gap:13px}
+.login-form label{display:grid;gap:6px;color:#53645a;font-size:12px;font-weight:700}
+.login-form input{width:100%;border:1px solid #d7e2d9;border-radius:9px;padding:11px 12px;font:14px 'DM Sans',sans-serif;color:#17251c;background:#fff}
+.login-form input:focus{outline:2px solid #b9d8c0;border-color:#5d966b}
+.login-actions{display:flex;align-items:center;gap:10px}
+.primary-button,.cancel-button{border:0;border-radius:9px;padding:11px 17px;font:700 13px 'DM Sans',sans-serif;cursor:pointer}
+.primary-button{background:#14532d;color:#fff}
+.primary-button:disabled{opacity:.6;cursor:wait}
+.cancel-button{background:#eef3ef;color:#53645a}
+.login-message{font-size:12px;color:#9a4d28;margin:0}
+.admin-welcome{display:block;background:#edf7ef;border-color:#cfe4d3;color:#245d35}
+.admin-welcome span{margin-left:12px;font-size:12px;color:#55745d}
+.admin-welcome p{margin:7px 0 0;font-size:13px;color:#55745d}
+@media(max-width:700px){.intro-actions{width:100%;justify-content:space-between}.login-panel{grid-template-columns:1fr;gap:18px}.admin-welcome span{display:block;margin:5px 0 0}}
