@@ -291,6 +291,22 @@ export default function App() {
         <article className="stat-card"><span>Total pemasukan</span><strong>{loading ? 'Memuat…' : money.format(totals.income)}</strong><small>{year === 'all' ? 'Semua periode' : 'Tahun ' + year}</small></article>
         <article className="stat-card"><span>Total pengeluaran</span><strong>{loading ? 'Memuat…' : money.format(totals.expense)}</strong><small>{year === 'all' ? 'Semua periode' : 'Tahun ' + year}</small></article>
       </section>
+      <section className="panel monthly-report-panel">
+        <div className="panel-heading">
+          <div><p className="eyebrow">ARSIP DAN LAPORAN</p><h2>Laporan bulanan</h2><p className="muted">Unduh ringkasan, seluruh rincian transaksi, dan rekap kategori dalam satu file Excel.</p></div>
+          <div className="report-actions">
+            <input className="year-select" type="month" value={reportMonth} min="2026-07" onChange={e => setReportMonth(e.target.value)} aria-label="Pilih bulan laporan" />
+            <button className="primary-button" type="button" onClick={downloadMonthlyExcel} disabled={loading}>Download Excel</button>
+          </div>
+        </div>
+        <div className="report-summary-grid">
+          <div><span>Saldo awal</span><strong>{money.format(monthlyReport.opening)}</strong></div>
+          <div><span>Pemasukan</span><strong>{money.format(monthlyReport.income)}</strong></div>
+          <div><span>Pengeluaran</span><strong>{money.format(monthlyReport.expense)}</strong></div>
+          <div><span>Saldo akhir</span><strong>{money.format(monthlyReport.closing)}</strong></div>
+        </div>
+        <p className="muted report-count">{monthlyReport.monthTransactions.length} transaksi tercatat pada bulan ini. Semua rincian akan dimasukkan ke sheet "Rincian Transaksi".</p>
+      </section>
       <section className="panel">
         <div className="panel-heading">
           <div><p className="eyebrow">BUKU KAS</p><h2>Riwayat transaksi</h2></div>
