@@ -31,3 +31,10 @@
 .admin-welcome span{margin-left:12px;font-size:12px;color:#55745d}
 .admin-welcome p{margin:7px 0 0;font-size:13px;color:#55745d}
 @media(max-width:700px){.intro-actions{width:100%;justify-content:space-between}.login-panel{grid-template-columns:1fr;gap:18px}.admin-welcome span{display:block;margin:5px 0 0}}
+
+.admin-welcome-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.admin-welcome-head>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-welcome-head .primary-button{white-space:nowrap}
+.transaction-form-panel{margin-top:0}
+.login-form select{width:100%;border:1px solid #d7e2d9;border-radius:9px;padding:11px 12px;font:14px 'DM Sans',sans-serif;color:#17251c;background:#fff}
+@media(max-width:700px){.admin-welcome-head{align-items:flex-start;flex-direction:column}.admin-welcome-head>div{display:block}.admin-welcome-head>div span{display:block;margin:5px 0 0}}
