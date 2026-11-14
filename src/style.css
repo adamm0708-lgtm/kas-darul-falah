@@ -60,3 +60,29 @@
 .page-button{border:1px solid #d5e1d7;border-radius:8px;padding:9px 12px;background:#fff;color:#245d35;font:600 12px 'DM Sans',sans-serif;cursor:pointer}
 .page-button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:700px){.history-pagination{align-items:flex-start;flex-direction:column}.pagination-controls{width:100%;justify-content:space-between;gap:6px}.page-button{padding:9px 10px}}
+
+.report-tabs{display:flex;gap:8px;margin-top:22px;padding-bottom:0;border-bottom:1px solid #e5ece6;overflow-x:auto}
+.report-tab{flex:0 0 auto;border:0;border-bottom:3px solid transparent;background:transparent;padding:12px 16px;color:#718076;font:700 13px 'DM Sans',sans-serif;cursor:pointer}
+.report-tab.active{color:#14532d;border-bottom-color:#2f8a4b}
+.report-summary-grid{padding-top:20px}
+.report-summary-note{grid-column:1/-1;color:#718076;font-size:12px;padding:5px 2px}
+.report-charts{display:grid;gap:16px;margin-top:20px}
+.chart-card{border:1px solid #e7eee8;border-radius:14px;padding:19px;background:#fff}
+.chart-card h3{font:700 15px Manrope;color:#24372a;margin:0 0 18px}
+.comparison-chart{display:grid;gap:18px}
+.comparison-chart>div{display:grid;grid-template-columns:105px minmax(70px,1fr) minmax(125px,auto);align-items:center;gap:12px;font-size:12px;color:#718076}
+.comparison-chart strong{font-size:12px;color:#34483a;text-align:right;white-space:nowrap}
+.comparison-track{height:14px;border-radius:99px;background:#eef3ef;overflow:hidden}
+.comparison-track i{display:block;height:100%;border-radius:99px}
+.income-bar,.legend-income,.daily-income{background:#29965a}
+.expense-bar,.legend-expense,.daily-expense{background:#e17b5d}
+.chart-legend{display:flex;gap:18px;margin-bottom:14px;color:#718076;font-size:11px}
+.chart-legend span{display:flex;align-items:center;gap:7px}
+.chart-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.daily-chart{height:190px;display:flex;align-items:stretch;gap:3px;padding:10px 4px 0;border-bottom:1px solid #dfe8e1;overflow-x:auto}
+.daily-chart-column{flex:1;min-width:8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
+.daily-bars{height:160px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+.daily-bars i{width:42%;min-height:0;border-radius:3px 3px 0 0}
+.daily-chart-column small{height:14px;font-size:9px;color:#87938a}
+.chart-footnote{font-size:11px;color:#87938a;margin:12px 0 0}
+@media(max-width:700px){.report-tab{padding:11px 12px;font-size:12px}.chart-card{padding:15px}.comparison-chart>div{grid-template-columns:82px minmax(45px,1fr);gap:8px}.comparison-chart strong{grid-column:2;text-align:left}.daily-chart{gap:2px}.daily-chart-column{min-width:7px}}
