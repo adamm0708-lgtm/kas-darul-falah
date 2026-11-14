@@ -53,3 +53,10 @@
 .report-detail-heading h3{font:700 15px Manrope;margin:0;color:#24372a}
 .report-detail-heading span{font-size:11px;color:#718076;background:#f0f5f1;padding:6px 10px;border-radius:99px}
 @media(max-width:700px){.report-downloads{width:100%}.report-downloads button{flex:1}}
+
+.history-pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid #edf1ed;color:#718076;font-size:12px}
+.pagination-controls{display:flex;align-items:center;gap:10px}
+.pagination-controls strong{font-size:12px;color:#425248;white-space:nowrap}
+.page-button{border:1px solid #d5e1d7;border-radius:8px;padding:9px 12px;background:#fff;color:#245d35;font:600 12px 'DM Sans',sans-serif;cursor:pointer}
+.page-button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:700px){.history-pagination{align-items:flex-start;flex-direction:column}.pagination-controls{width:100%;justify-content:space-between;gap:6px}.page-button{padding:9px 10px}}
