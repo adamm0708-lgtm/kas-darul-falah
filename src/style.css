@@ -38,3 +38,12 @@
 .transaction-form-panel{margin-top:0}
 .login-form select{width:100%;border:1px solid #d7e2d9;border-radius:9px;padding:11px 12px;font:14px 'DM Sans',sans-serif;color:#17251c;background:#fff}
 @media(max-width:700px){.admin-welcome-head{align-items:flex-start;flex-direction:column}.admin-welcome-head>div{display:block}.admin-welcome-head>div span{display:block;margin:5px 0 0}}
+
+.monthly-report-panel{margin-bottom:20px}
+.report-actions{display:flex;align-items:center;gap:10px}
+.report-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+.report-summary-grid>div{padding:15px;border:1px solid #e7eee8;border-radius:12px;background:#f9fbf9}
+.report-summary-grid span{display:block;color:#718076;font-size:11px;margin-bottom:8px}
+.report-summary-grid strong{font:800 16px Manrope;color:#245d35}
+.report-count{margin-top:14px}
+@media(max-width:700px){.report-actions{width:100%;flex-wrap:wrap}.report-actions input{flex:1;min-width:145px}.report-summary-grid{grid-template-columns:repeat(2,1fr)}.monthly-report-panel .panel-heading{align-items:flex-start;flex-direction:column}}
