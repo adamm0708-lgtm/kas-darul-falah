@@ -18,6 +18,14 @@ export default function App() {
   const [loginMessage, setLoginMessage] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [savingTransaction, setSavingTransaction] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
+  const [newType, setNewType] = useState('income');
+  const [newCategory, setNewCategory] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newAmount, setNewAmount] = useState('');
 
   async function verifyAdmin(session) {
     if (!session?.user) {
@@ -99,6 +107,63 @@ export default function App() {
     setLoginBusy(false);
   }
 
+  async function refreshTransactions() {
+    const { data, error: refreshError } = await supabase
+      .from('transactions')
+      .select('id, transaction_date, transaction_type, description, amount, category_id')
+      .order('transaction_date', { ascending: false });
+    if (refreshError) throw refreshError;
+    setTransactions(data ?? []);
+  }
+
+  async function handleAddTransaction(event) {
+    event.preventDefault();
+    if (!isAdmin) return;
+    if (!newCategory) {
+      setFormMessage('Pilih kategori terlebih dahulu.');
+      return;
+    }
+    const amount = Number(newAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormMessage('Jumlah harus lebih dari nol.');
+      return;
+    }
+    setSavingTransaction(true);
+    setFormMessage('');
+    const { data: userResult, error: userError } = await supabase.auth.getUser();
+    if (userError || !userResult.user) {
+      setFormMessage('Sesi admin tidak ditemukan. Silakan login kembali.');
+      setSavingTransaction(false);
+      return;
+    }
+    const { error: insertError } = await supabase.from('transactions').insert({
+      transaction_date: newDate,
+      transaction_type: newType,
+      category_id: Number(newCategory),
+      description: newDescription.trim(),
+      amount,
+      created_by: userResult.user.id
+    });
+    if (insertError) {
+      setFormMessage('Gagal menyimpan: ' + insertError.message);
+      setSavingTransaction(false);
+      return;
+    }
+    try {
+      await refreshTransactions();
+      setFormMessage('Transaksi berhasil disimpan.');
+      setNewDescription('');
+      setNewAmount('');
+      setNewDate(new Date().toISOString().slice(0, 10));
+      setNewType('income');
+      setNewCategory('');
+      setShowAddForm(false);
+    } catch (refreshError) {
+      setFormMessage('Transaksi tersimpan, tetapi daftar gagal diperbarui: ' + refreshError.message);
+    }
+    setSavingTransaction(false);
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut();
     setIsAdmin(false);
@@ -133,7 +198,19 @@ export default function App() {
             : <button className="outline-button" onClick={() => { setShowLogin(v => !v); setLoginMessage(''); }}>Masuk Admin</button>}
         </div>
       </section>
-      {isAdmin && <section className="admin-welcome"><strong>Mode Admin aktif</strong><span>{adminEmail}</span><p>Login berhasil. Fitur pengelolaan transaksi akan ditambahkan pada tahap berikutnya.</p></section>}
+      {isAdmin && <section className="admin-welcome"><div className="admin-welcome-head"><div><strong>Mode Admin aktif</strong><span>{adminEmail}</span></div><button className="primary-button" type="button" onClick={() => { setShowAddForm(v => !v); setFormMessage(''); }}>{showAddForm ? 'Tutup Form' : '+ Tambah Transaksi'}</button></div><p>Catat pemasukan atau pengeluaran baru.</p></section>}
+      {isAdmin && showAddForm && <section className="login-panel transaction-form-panel">
+        <div><p className="eyebrow">BUKU KAS</p><h2>Tambah Transaksi</h2><p className="muted">Catatan baru akan langsung tersimpan ke database.</p></div>
+        <form className="login-form" onSubmit={handleAddTransaction}>
+          <label>Tanggal<input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} required /></label>
+          <label>Jenis transaksi<select value={newType} onChange={e => setNewType(e.target.value)}><option value="income">Pemasukan</option><option value="expense">Pengeluaran</option></select></label>
+          <label>Kategori<select value={newCategory} onChange={e => setNewCategory(e.target.value)} required><option value="">Pilih kategori</option>{categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name ?? cat.category_name ?? cat.title ?? 'Kategori'}</option>)}</select></label>
+          <label>Keterangan<input type="text" value={newDescription} onChange={e => setNewDescription(e.target.value)} placeholder="Contoh: Infaq bulanan" required maxLength={200} /></label>
+          <label>Jumlah (Rupiah)<input type="number" min="1" step="1" inputMode="numeric" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="Contoh: 100000" required /></label>
+          {formMessage && <p className="login-message">{formMessage}</p>}
+          <div className="login-actions"><button className="primary-button" type="submit" disabled={savingTransaction}>{savingTransaction ? 'Menyimpan…' : 'Simpan Transaksi'}</button><button className="cancel-button" type="button" onClick={() => { setShowAddForm(false); setFormMessage(''); }}>Batal</button></div>
+        </form>
+      </section>}
       {showLogin && !isAdmin && <section className="login-panel">
         <div><p className="eyebrow">AREA PENGELOLA</p><h2>Login Admin</h2><p className="muted">Masuk menggunakan akun admin yang sudah dibuat di Supabase.</p></div>
         <form className="login-form" onSubmit={handleLogin}>
