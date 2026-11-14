@@ -389,15 +389,15 @@ export default function App() {
             <div className="chart-card">
               <h3>Perbandingan pemasukan dan pengeluaran</h3>
               <div className="comparison-chart">
-                <div><span>Pemasukan</span><div className="comparison-track"><i className="income-bar" style={{ width: (monthlyReport.income / maxTotal * 100) + '%' }} /></div><strong>{money.format(monthlyReport.income)}</strong></div>
-                <div><span>Pengeluaran</span><div className="comparison-track"><i className="expense-bar" style={{ width: (monthlyReport.expense / maxTotal * 100) + '%' }} /></div><strong>{money.format(monthlyReport.expense)}</strong></div>
+                <div><span>Pemasukan</span><div className="comparison-track"><i className="income-bar" style={{ width: (monthlyReport.income / maxTotal * 100) + '%', background: 'linear-gradient(90deg, #16a34a, #4ade80)' }} /></div><strong>{money.format(monthlyReport.income)}</strong></div>
+                <div><span>Pengeluaran</span><div className="comparison-track"><i className="expense-bar" style={{ width: (monthlyReport.expense / maxTotal * 100) + '%', background: 'linear-gradient(90deg, #ea580c, #fb923c)' }} /></div><strong>{money.format(monthlyReport.expense)}</strong></div>
               </div>
             </div>
             <div className="chart-card">
               <h3>Aktivitas kas per tanggal</h3>
               <div className="chart-legend"><span><i className="legend-income" /> Pemasukan</span><span><i className="legend-expense" /> Pengeluaran</span></div>
               <div className="daily-chart">{daily.map(d => <div className="daily-chart-column" key={d.day} title={'Tanggal ' + d.day + ': pemasukan ' + money.format(d.income) + ', pengeluaran ' + money.format(d.expense)}>
-                <div className="daily-bars"><i className="daily-income" style={{ height: (d.income / maxDaily * 100) + '%' }} /><i className="daily-expense" style={{ height: (d.expense / maxDaily * 100) + '%' }} /></div>
+                <div className="daily-bars"><i className="daily-income" style={{ height: (d.income / maxDaily * 100) + '%', background: 'linear-gradient(180deg, #4ade80, #15803d)' }} /><i className="daily-expense" style={{ height: (d.expense / maxDaily * 100) + '%', background: 'linear-gradient(180deg, #fdba74, #ea580c)' }} /></div>
                 <small>{d.day % 5 === 1 || d.day === 1 ? d.day : ''}</small>
               </div>)}</div>
               <p className="chart-footnote">Grafik mengikuti transaksi pada bulan yang dipilih. Arahkan kursor ke batang untuk melihat nilai harian.</p>
