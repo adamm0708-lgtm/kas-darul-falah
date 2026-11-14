@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { supabase, supabaseConfigured } from './lib/supabase';
 
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
@@ -11,6 +12,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [year, setYear] = useState('all');
+  const [reportMonth, setReportMonth] = useState('2026-11');
   const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -181,6 +183,68 @@ export default function App() {
     return a;
   }, { income: 0, expense: 0 }), [visible]);
   const balance = totals.income - totals.expense;
+  const monthlyReport = useMemo(() => {
+    const [selectedYear, selectedMonth] = reportMonth.split('-').map(Number);
+    const monthTransactions = transactions
+      .filter(t => String(t.transaction_date).slice(0, 7) === reportMonth)
+      .slice()
+      .sort((a, b) => String(a.transaction_date).localeCompare(String(b.transaction_date)));
+    const income = monthTransactions.filter(t => t.transaction_type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
+    const expense = monthTransactions.filter(t => t.transaction_type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
+    const knownOpening = {
+      '2026-07': 2330000,
+      '2026-08': 2105000,
+      '2026-09': 6259000,
+      '2026-10': 7172000,
+      '2026-11': 7458000
+    };
+    const opening = knownOpening[reportMonth] ?? (reportMonth > '2026-11' ? 7458000 + transactions
+      .filter(t => String(t.transaction_date).slice(0, 7) >= '2026-11' && String(t.transaction_date).slice(0, 7) < reportMonth)
+      .reduce((s, t) => s + (t.transaction_type === 'income' ? 1 : -1) * Number(t.amount || 0), 0) : 0);
+    const byCategory = new Map();
+    monthTransactions.forEach(t => {
+      const category = categoryMap.get(String(t.category_id)) || 'Tanpa kategori';
+      const item = byCategory.get(category) || { income: 0, expense: 0 };
+      if (t.transaction_type === 'income') item.income += Number(t.amount || 0);
+      if (t.transaction_type === 'expense') item.expense += Number(t.amount || 0);
+      byCategory.set(category, item);
+    });
+    return { monthTransactions, income, expense, opening, closing: opening + income - expense, byCategory, selectedYear, selectedMonth };
+  }, [transactions, reportMonth, categoryMap]);
+
+  function downloadMonthlyExcel() {
+    const monthLabel = new Date(reportMonth + '-01T00:00:00').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const workbook = XLSX.utils.book_new();
+    const summaryRows = [
+      ['LANGGAR WAQAF DARUL FALAH'],
+      ['Ledok Kidul Dalem, Bangil'],
+      ['LAPORAN KAS BULAN ' + monthLabel.toUpperCase()],
+      [],
+      ['Saldo awal', monthlyReport.opening],
+      ['Total pemasukan', monthlyReport.income],
+      ['Total pengeluaran', monthlyReport.expense],
+      ['Saldo akhir', monthlyReport.closing],
+      ['Jumlah transaksi', monthlyReport.monthTransactions.length]
+    ];
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summaryRows), 'Ringkasan');
+    const detailRows = [
+      ['No', 'Tanggal', 'Keterangan', 'Kategori', 'Jenis', 'Pemasukan (Rp)', 'Pengeluaran (Rp)'],
+      ...monthlyReport.monthTransactions.map((t, i) => [
+        i + 1, t.transaction_date, t.description || '-', categoryMap.get(String(t.category_id)) || '-',
+        t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+        t.transaction_type === 'income' ? Number(t.amount || 0) : 0,
+        t.transaction_type === 'expense' ? Number(t.amount || 0) : 0
+      ])
+    ];
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(detailRows), 'Rincian Transaksi');
+    const categoryRows = [
+      ['Kategori', 'Total Pemasukan (Rp)', 'Total Pengeluaran (Rp)', 'Selisih (Rp)'],
+      ...[...monthlyReport.byCategory.entries()].map(([name, value]) => [name, value.income, value.expense, value.income - value.expense])
+    ];
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(categoryRows), 'Rekap Kategori');
+    XLSX.writeFile(workbook, 'Laporan_Kas_' + reportMonth + '.xlsx');
+  }
+
 
   return (
     <main className="page-shell">
