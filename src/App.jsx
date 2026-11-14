@@ -14,6 +14,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [year, setYear] = useState('all');
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyPageSize = 10;
   const [reportMonth, setReportMonth] = useState('2026-11');
   const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState('');
@@ -178,6 +180,8 @@ export default function App() {
   const categoryMap = useMemo(() => new Map(categories.map(c => [String(c.id), c.name ?? c.category_name ?? c.title ?? 'Kategori'])), [categories]);
   const years = useMemo(() => [...new Set(transactions.map(t => String(t.transaction_date).slice(0, 4)))].sort().reverse(), [transactions]);
   const visible = useMemo(() => transactions.filter(t => year === 'all' || String(t.transaction_date).startsWith(year)), [transactions, year]);
+  const historyPageCount = Math.max(1, Math.ceil(visible.length / historyPageSize));
+  const paginatedVisible = visible.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize);
   const totals = useMemo(() => visible.reduce((a, t) => {
     const amount = Number(t.amount) || 0;
     if (t.transaction_type === 'income') a.income += amount;
@@ -367,7 +371,7 @@ export default function App() {
       <section className="panel">
         <div className="panel-heading">
           <div><p className="eyebrow">BUKU KAS</p><h2>Riwayat transaksi</h2></div>
-          <select className="year-select" value={year} onChange={e => setYear(e.target.value)} aria-label="Filter tahun">
+          <select className="year-select" value={year} onChange={e => { setYear(e.target.value); setHistoryPage(1); }} aria-label="Filter tahun">
             <option value="all">Semua tahun</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
@@ -376,7 +380,7 @@ export default function App() {
           visible.length === 0 ? <div className="empty-state"><div className="empty-icon">▤</div><h3>Belum ada transaksi</h3><p>Belum ditemukan catatan untuk periode yang dipilih.</p></div> :
           <div className="table-wrap"><table className="transactions-table">
             <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Jumlah</th></tr></thead>
-            <tbody>{visible.map(t => <tr key={t.id}>
+            <tbody>{paginatedVisible.map(t => <tr key={t.id}>
               <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
               <td className="description-cell">{t.description || '-'}</td>
               <td>{categoryMap.get(String(t.category_id)) || '-'}</td>
@@ -384,6 +388,14 @@ export default function App() {
               <td className="amount-cell">{money.format(Number(t.amount) || 0)}</td>
             </tr>)}</tbody>
           </table></div>}
+        {!loading && visible.length > 0 && <div className="history-pagination">
+          <span>Menampilkan {((historyPage - 1) * historyPageSize) + 1}–{Math.min(historyPage * historyPageSize, visible.length)} dari {visible.length} transaksi</span>
+          <div className="pagination-controls">
+            <button type="button" className="page-button" onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage === 1}>Sebelumnya</button>
+            <strong>Halaman {historyPage} / {historyPageCount}</strong>
+            <button type="button" className="page-button" onClick={() => setHistoryPage(p => Math.min(historyPageCount, p + 1))} disabled={historyPage >= historyPageCount}>Berikutnya</button>
+          </div>
+        </div>}
       </section>
       <footer>© {new Date().getFullYear()} Langgar Waqaf Darul Falah · Bangil</footer>
     </main>
