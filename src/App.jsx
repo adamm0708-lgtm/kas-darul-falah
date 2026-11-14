@@ -17,6 +17,7 @@ export default function App() {
   const [historyPage, setHistoryPage] = useState(1);
   const historyPageSize = 10;
   const [reportMonth, setReportMonth] = useState('2026-11');
+  const [reportTab, setReportTab] = useState('summary');
   const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -347,26 +348,62 @@ export default function App() {
             <div className="report-downloads"><button className="primary-button" type="button" onClick={downloadMonthlyPdf} disabled={loading}>Download PDF</button>{isAdmin && <button className="outline-button" type="button" onClick={downloadMonthlyExcel} disabled={loading}>Download Excel</button>}</div>
           </div>
         </div>
-        <div className="report-summary-grid">
+        <div className="report-tabs" role="tablist" aria-label="Tampilan laporan">
+          <button type="button" className={reportTab === 'summary' ? 'report-tab active' : 'report-tab'} onClick={() => setReportTab('summary')}>Ringkasan</button>
+          <button type="button" className={reportTab === 'details' ? 'report-tab active' : 'report-tab'} onClick={() => setReportTab('details')}>Rincian Transaksi</button>
+          <button type="button" className={reportTab === 'charts' ? 'report-tab active' : 'report-tab'} onClick={() => setReportTab('charts')}>Grafik</button>
+        </div>
+        {reportTab === 'summary' && <div className="report-summary-grid">
           <div><span>Saldo awal</span><strong>{money.format(monthlyReport.opening)}</strong></div>
           <div><span>Pemasukan</span><strong>{money.format(monthlyReport.income)}</strong></div>
           <div><span>Pengeluaran</span><strong>{money.format(monthlyReport.expense)}</strong></div>
           <div><span>Saldo akhir</span><strong>{money.format(monthlyReport.closing)}</strong></div>
-        </div>
-        <div className="report-detail-heading"><h3>Rincian transaksi bulan ini</h3><span>{monthlyReport.monthTransactions.length} transaksi</span></div>
-        {monthlyReport.monthTransactions.length === 0 ? <div className="empty-state"><p>Belum ada transaksi pada bulan yang dipilih.</p></div> :
-          <div className="table-wrap"><table className="transactions-table">
-            <thead><tr><th>No.</th><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Pemasukan</th><th className="amount-cell">Pengeluaran</th></tr></thead>
-            <tbody>{monthlyReport.monthTransactions.map((t, i) => <tr key={t.id}>
-              <td>{i + 1}</td>
-              <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
-              <td className="description-cell">{t.description || '-'}</td>
-              <td>{categoryMap.get(String(t.category_id)) || '-'}</td>
-              <td><span className={'type-pill ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span></td>
-              <td className="amount-cell">{t.transaction_type === 'income' ? money.format(Number(t.amount) || 0) : '-'}</td>
-              <td className="amount-cell">{t.transaction_type === 'expense' ? money.format(Number(t.amount) || 0) : '-'}</td>
-            </tr>)}</tbody>
-          </table></div>}
+          <div className="report-summary-note">Total {monthlyReport.monthTransactions.length} transaksi tercatat pada bulan ini.</div>
+        </div>}
+        {reportTab === 'details' && <>
+          <div className="report-detail-heading"><h3>Rincian transaksi bulan ini</h3><span>{monthlyReport.monthTransactions.length} transaksi</span></div>
+          {monthlyReport.monthTransactions.length === 0 ? <div className="empty-state"><p>Belum ada transaksi pada bulan yang dipilih.</p></div> :
+            <div className="table-wrap"><table className="transactions-table">
+              <thead><tr><th>No.</th><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Pemasukan</th><th className="amount-cell">Pengeluaran</th></tr></thead>
+              <tbody>{monthlyReport.monthTransactions.map((t, i) => <tr key={t.id}>
+                <td>{i + 1}</td>
+                <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
+                <td className="description-cell">{t.description || '-'}</td>
+                <td>{categoryMap.get(String(t.category_id)) || '-'}</td>
+                <td><span className={'type-pill ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span></td>
+                <td className="amount-cell">{t.transaction_type === 'income' ? money.format(Number(t.amount) || 0) : '-'}</td>
+                <td className="amount-cell">{t.transaction_type === 'expense' ? money.format(Number(t.amount) || 0) : '-'}</td>
+              </tr>)}</tbody>
+            </table></div>}
+        </>}
+        {reportTab === 'charts' && (() => {
+          const daysInMonth = new Date(monthlyReport.selectedYear, monthlyReport.selectedMonth, 0).getDate();
+          const daily = Array.from({ length: daysInMonth }, (_, index) => {
+            const day = index + 1;
+            const items = monthlyReport.monthTransactions.filter(t => Number(String(t.transaction_date).slice(8, 10)) === day);
+            return { day, income: items.filter(t => t.transaction_type === 'income').reduce((sum, t) => sum + Number(t.amount || 0), 0), expense: items.filter(t => t.transaction_type === 'expense').reduce((sum, t) => sum + Number(t.amount || 0), 0) };
+          });
+          const maxDaily = Math.max(1, ...daily.flatMap(d => [d.income, d.expense]));
+          const maxTotal = Math.max(1, monthlyReport.income, monthlyReport.expense);
+          return <div className="report-charts">
+            <div className="chart-card">
+              <h3>Perbandingan pemasukan dan pengeluaran</h3>
+              <div className="comparison-chart">
+                <div><span>Pemasukan</span><div className="comparison-track"><i className="income-bar" style={{ width: (monthlyReport.income / maxTotal * 100) + '%' }} /></div><strong>{money.format(monthlyReport.income)}</strong></div>
+                <div><span>Pengeluaran</span><div className="comparison-track"><i className="expense-bar" style={{ width: (monthlyReport.expense / maxTotal * 100) + '%' }} /></div><strong>{money.format(monthlyReport.expense)}</strong></div>
+              </div>
+            </div>
+            <div className="chart-card">
+              <h3>Aktivitas kas per tanggal</h3>
+              <div className="chart-legend"><span><i className="legend-income" /> Pemasukan</span><span><i className="legend-expense" /> Pengeluaran</span></div>
+              <div className="daily-chart">{daily.map(d => <div className="daily-chart-column" key={d.day} title={'Tanggal ' + d.day + ': pemasukan ' + money.format(d.income) + ', pengeluaran ' + money.format(d.expense)}>
+                <div className="daily-bars"><i className="daily-income" style={{ height: (d.income / maxDaily * 100) + '%' }} /><i className="daily-expense" style={{ height: (d.expense / maxDaily * 100) + '%' }} /></div>
+                <small>{d.day % 5 === 1 || d.day === 1 ? d.day : ''}</small>
+              </div>)}</div>
+              <p className="chart-footnote">Grafik mengikuti transaksi pada bulan yang dipilih. Arahkan kursor ke batang untuk melihat nilai harian.</p>
+            </div>
+          </div>;
+        })()}
       </section>
       <section className="panel">
         <div className="panel-heading">
