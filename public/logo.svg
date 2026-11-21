@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Logo Kas Langgar Darul Falah">
+  <title>Kas Langgar Darul Falah</title>
+  <defs>
+    <linearGradient id="logoTileGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b6b3a"/>
+      <stop offset="0.55" stop-color="#14532d"/>
+      <stop offset="1" stop-color="#0b3d20"/>
+    </linearGradient>
+    <mask id="logoCrescent">
+      <rect width="120" height="120" fill="#ffffff"/>
+      <circle cx="99" cy="21" r="7.5" fill="#000000"/>
+    </mask>
+  </defs>
+  <rect x="2" y="2" width="116" height="116" rx="28" fill="url(#logoTileGrad)" stroke="#d4af37" stroke-width="2.5"/>
+  <g fill="none" stroke="#d4af37" stroke-opacity="0.22" stroke-width="1.5">
+    <rect x="9" y="9" width="20" height="20" rx="2"/>
+    <rect x="9" y="9" width="20" height="20" rx="2" transform="rotate(45 19 19)"/>
+  </g>
+  <circle cx="95" cy="24" r="9" fill="#d4af37" mask="url(#logoCrescent)"/>
+  <path d="M30 68 A30 30 0 0 1 90 68 Z" fill="#ffffff"/>
+  <rect x="58" y="32" width="4" height="10" fill="#d4af37"/>
+  <circle cx="60" cy="29" r="3.5" fill="#d4af37"/>
+  <rect x="14" y="58" width="7" height="44" rx="3.5" fill="#ffffff"/>
+  <rect x="99" y="58" width="7" height="44" rx="3.5" fill="#ffffff"/>
+  <circle cx="17.5" cy="54" r="3" fill="#d4af37"/>
+  <circle cx="102.5" cy="54" r="3" fill="#d4af37"/>
+  <rect x="24" y="68" width="72" height="34" rx="5" fill="#ffffff"/>
+  <path d="M54 102 V88 a6 6 0 0 1 12 0 v14 Z" fill="#14532d"/>
+</svg>

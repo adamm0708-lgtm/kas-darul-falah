@@ -5,6 +5,52 @@ import autoTable from 'jspdf-autotable';
 import { supabase, supabaseConfigured } from './lib/supabase';
 import InstallPrompt from './components/InstallPrompt.jsx';
 
+/* Logo resmi: kubah masjid putih + bulan sabit emas di atas hijau #14532d —
+   selaras dengan ikon PWA (public/icons/icon.svg). Hanya visual. */
+function LogoMark({ className }) {
+  return (
+    <span className={className || 'logo-mark'} aria-hidden="true">
+      <svg viewBox="0 0 120 120" role="img" aria-label="Logo Kas Langgar Darul Falah">
+        <defs>
+          <linearGradient id="logoTileGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#1b6b3a" />
+            <stop offset="0.55" stopColor="#14532d" />
+            <stop offset="1" stopColor="#0b3d20" />
+          </linearGradient>
+          <mask id="logoCrescent">
+            <rect width="120" height="120" fill="#fff" />
+            <circle cx="99" cy="21" r="7.5" fill="#000" />
+          </mask>
+        </defs>
+        <rect x="2" y="2" width="116" height="116" rx="28" fill="url(#logoTileGrad)" stroke="#d4af37" strokeWidth="2.5" />
+        <g fill="none" stroke="#d4af37" strokeOpacity="0.22" strokeWidth="1.5">
+          <rect x="9" y="9" width="20" height="20" rx="2" />
+          <rect x="9" y="9" width="20" height="20" rx="2" transform="rotate(45 19 19)" />
+        </g>
+        <circle cx="95" cy="24" r="9" fill="#d4af37" mask="url(#logoCrescent)" />
+        <path d="M30 68 A30 30 0 0 1 90 68 Z" fill="#ffffff" />
+        <rect x="58" y="32" width="4" height="10" fill="#d4af37" />
+        <circle cx="60" cy="29" r="3.5" fill="#d4af37" />
+        <rect x="14" y="58" width="7" height="44" rx="3.5" fill="#ffffff" />
+        <rect x="99" y="58" width="7" height="44" rx="3.5" fill="#ffffff" />
+        <circle cx="17.5" cy="54" r="3" fill="#d4af37" />
+        <circle cx="102.5" cy="54" r="3" fill="#d4af37" />
+        <rect x="24" y="68" width="72" height="34" rx="5" fill="#ffffff" />
+        <path d="M54 102 V88 a6 6 0 0 1 12 0 v14 Z" fill="#14532d" />
+      </svg>
+    </span>
+  );
+}
+
+/* Warna chip kategori — murni presentasi, deterministik dari nama. */
+const CAT_TONES = ['cat-tone-0', 'cat-tone-1', 'cat-tone-2', 'cat-tone-3', 'cat-tone-4', 'cat-tone-5'];
+function catTone(name) {
+  const s = String(name || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return CAT_TONES[h % CAT_TONES.length];
+}
+
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 const dateFmt = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -299,10 +345,49 @@ export default function App() {
   return (
     <main className="page-shell">
       <InstallPrompt />
-      <header className="topbar">
-        <div className="brand-mark">DF</div>
-        <div><p className="eyebrow">LAPORAN KEUANGAN LANGGAR</p><h1>Waqaf Darul Falah</h1><p className="muted">Ledok Kidul Dalem · Bangil</p></div>
-        <span className="status-pill">{connection}</span>
+      <header className="hero">
+        <svg className="hero-skyline" viewBox="0 0 520 200" aria-hidden="true" focusable="false">
+          <defs>
+            <mask id="heroCrescent">
+              <rect width="520" height="200" fill="#fff" />
+              <circle cx="454" cy="40" r="14" fill="#000" />
+            </mask>
+          </defs>
+          <g fill="#082a17" opacity="0.6">
+            <path d="M150 200 V150 A70 70 0 0 1 290 150 V200 Z" />
+            <rect x="120" y="148" width="200" height="52" />
+            <rect x="96" y="108" width="14" height="92" rx="7" />
+            <rect x="330" y="108" width="14" height="92" rx="7" />
+            <path d="M360 200 V170 A26 26 0 0 1 412 170 V200 Z" />
+            <rect x="352" y="168" width="68" height="32" />
+            <path d="M28 200 V178 A20 20 0 0 1 68 178 V200 Z" />
+            <rect x="22" y="176" width="52" height="24" />
+          </g>
+          <g fill="#d4af37">
+            <rect x="216" y="64" width="8" height="20" />
+            <circle cx="220" cy="60" r="6" />
+            <circle cx="103" cy="102" r="6" />
+            <circle cx="337" cy="102" r="6" />
+            <circle cx="446" cy="46" r="17" mask="url(#heroCrescent)" />
+            <path d="M400 90 l1.8 4.2 4.2 1.8 -4.2 1.8 -1.8 4.2 -1.8 -4.2 -4.2 -1.8 4.2 -1.8 z" />
+            <path d="M120 60 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5 z" opacity="0.7" />
+          </g>
+        </svg>
+        <div className="hero-inner">
+          <div className="hero-top">
+            <div className="logo-lockup">
+              <LogoMark className="logo-mark" />
+              <div className="logo-text">
+                <p className="logo-eyebrow">LAPORAN KEUANGAN LANGGAR</p>
+                <h1 className="logo-name">Kas Langgar Darul Falah</h1>
+                <p className="logo-sub">Langgar Waqaf Darul Falah · Ledok Kidul Dalem, Bangil</p>
+              </div>
+            </div>
+            <span className="status-pill">{connection}</span>
+          </div>
+          <p className="hero-tag">Keuangan langgar yang transparan — pemasukan, pengeluaran, dan laporan bulanan bisa dipantau bersama oleh jamaah.</p>
+          <div className="hero-chips"><span className="hero-chip">Transparan</span><span className="hero-chip">Laporan bulanan</span><span className="hero-chip">Arsip lengkap</span></div>
+        </div>
       </header>
       <section className="intro">
         <div><p className="eyebrow">DASHBOARD KAS</p><h2>Ringkasan keuangan</h2><p className="muted">Transparan, rapi, dan bisa dipantau bersama.</p></div>
@@ -338,9 +423,9 @@ export default function App() {
       {loginMessage && !showLogin && !isAdmin && <p className="login-message">{loginMessage}</p>}
       {error && <section className="notice"><strong>Ada kendala saat memuat data.</strong><p>{error}</p></section>}
       <section className="stats-grid">
-        <article className="stat-card balance"><span>Saldo bersih periode</span><strong>{loading ? 'Memuat…' : money.format(balance)}</strong><small>Total pemasukan dikurangi pengeluaran</small></article>
-        <article className="stat-card"><span>Total pemasukan</span><strong>{loading ? 'Memuat…' : money.format(totals.income)}</strong><small>{year === 'all' ? 'Semua periode' : 'Tahun ' + year}</small></article>
-        <article className="stat-card"><span>Total pengeluaran</span><strong>{loading ? 'Memuat…' : money.format(totals.expense)}</strong><small>{year === 'all' ? 'Semua periode' : 'Tahun ' + year}</small></article>
+        <article className="stat-card balance"><span className="stat-icon balance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3" /><path d="M3 10h18" /><path d="M16 15h2" /></svg></span><span>Saldo bersih periode</span><strong>{loading ? 'Memuat…' : money.format(balance)}</strong><small>Total pemasukan dikurangi pengeluaran</small></article>
+        <article className="stat-card"><span className="stat-icon income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8" /><path d="M14 7h7v7" /></svg></span><span>Total pemasukan</span><strong>{loading ? 'Memuat…' : money.format(totals.income)}</strong><small>{year === 'all' ? 'Semua periode' : 'Tahun ' + year}</small></article>
+        <article className="stat-card"><span className="stat-icon expense"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 7l6 6 4-4 8 8" /><path d="M21 17v-7h-7" /></svg></span><span>Total pengeluaran</span><strong>{loading ? 'Memuat…' : money.format(totals.expense)}</strong><small>{year === 'all' ? 'Semua periode' : 'Tahun ' + year}</small></article>
       </section>
       <section className="panel monthly-report-panel">
         <div className="panel-heading">
@@ -356,22 +441,22 @@ export default function App() {
           <button type="button" className={reportTab === 'charts' ? 'report-tab active' : 'report-tab'} onClick={() => setReportTab('charts')}>Grafik</button>
         </div>
         {reportTab === 'summary' && <div className="report-summary-grid">
-          <div><span>Saldo awal</span><strong>{money.format(monthlyReport.opening)}</strong></div>
-          <div><span>Pemasukan</span><strong>{money.format(monthlyReport.income)}</strong></div>
-          <div><span>Pengeluaran</span><strong>{money.format(monthlyReport.expense)}</strong></div>
-          <div><span>Saldo akhir</span><strong>{money.format(monthlyReport.closing)}</strong></div>
+          <div className="sum-opening"><span>Saldo awal</span><strong>{money.format(monthlyReport.opening)}</strong></div>
+          <div className="sum-income"><span>Pemasukan</span><strong>{money.format(monthlyReport.income)}</strong></div>
+          <div className="sum-expense"><span>Pengeluaran</span><strong>{money.format(monthlyReport.expense)}</strong></div>
+          <div className="sum-closing"><span>Saldo akhir</span><strong>{money.format(monthlyReport.closing)}</strong></div>
           <div className="report-summary-note">Total {monthlyReport.monthTransactions.length} transaksi tercatat pada bulan ini.</div>
         </div>}
         {reportTab === 'details' && <>
           <div className="report-detail-heading"><h3>Rincian transaksi bulan ini</h3><span>{monthlyReport.monthTransactions.length} transaksi</span></div>
           {monthlyReport.monthTransactions.length === 0 ? <div className="empty-state"><p>Belum ada transaksi pada bulan yang dipilih.</p></div> :
-            <div className="table-wrap"><table className="transactions-table">
+            <div className="table-wrap tall"><table className="transactions-table">
               <thead><tr><th>No.</th><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Pemasukan</th><th className="amount-cell">Pengeluaran</th></tr></thead>
               <tbody>{monthlyReport.monthTransactions.map((t, i) => <tr key={t.id}>
                 <td>{i + 1}</td>
                 <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
                 <td className="description-cell">{t.description || '-'}</td>
-                <td>{categoryMap.get(String(t.category_id)) || '-'}</td>
+                <td><span className={'cat-chip ' + catTone(categoryMap.get(String(t.category_id)))}><i />{categoryMap.get(String(t.category_id)) || '-'}</span></td>
                 <td><span className={'type-pill ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span></td>
                 <td className="amount-cell">{t.transaction_type === 'income' ? money.format(Number(t.amount) || 0) : '-'}</td>
                 <td className="amount-cell">{t.transaction_type === 'expense' ? money.format(Number(t.amount) || 0) : '-'}</td>
@@ -422,9 +507,9 @@ export default function App() {
             <tbody>{paginatedVisible.map(t => <tr key={t.id}>
               <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
               <td className="description-cell">{t.description || '-'}</td>
-              <td>{categoryMap.get(String(t.category_id)) || '-'}</td>
+              <td><span className={'cat-chip ' + catTone(categoryMap.get(String(t.category_id)))}><i />{categoryMap.get(String(t.category_id)) || '-'}</span></td>
               <td><span className={'type-pill ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span></td>
-              <td className="amount-cell">{money.format(Number(t.amount) || 0)}</td>
+              <td className={'amount-cell ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{money.format(Number(t.amount) || 0)}</td>
             </tr>)}</tbody>
           </table></div>}
         {!loading && visible.length > 0 && <div className="history-pagination">
@@ -436,7 +521,14 @@ export default function App() {
           </div>
         </div>}
       </section>
-      <footer>© {new Date().getFullYear()} Langgar Waqaf Darul Falah · Bangil</footer>
+      <footer className="site-footer">
+        <LogoMark className="logo-mark" />
+        <div>
+          <strong>Kas Langgar Darul Falah</strong>
+          <p>Langgar Waqaf Darul Falah · Ledok Kidul Dalem, Bangil<br />Dikelola dengan transparan untuk jamaah.</p>
+        </div>
+        <span className="foot-copy">© {new Date().getFullYear()} Langgar Waqaf Darul Falah<br />Keuangan langgar, terbuka untuk semua.</span>
+      </footer>
     </main>
   );
 }
