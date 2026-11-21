@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#14532d"/>
+  <!-- bulan sabit emas -->
+  <circle cx="392" cy="116" r="34" fill="#d4af37"/>
+  <circle cx="404" cy="108" r="30" fill="#14532d"/>
+  <!-- kubah masjid -->
+  <path d="M158 264 A98 96 0 0 1 354 264 Z" fill="#ffffff"/>
+  <rect x="252" y="140" width="8" height="28" fill="#d4af37"/>
+  <circle cx="256" cy="136" r="7" fill="#d4af37"/>
+  <!-- menara -->
+  <rect x="108" y="216" width="16" height="188" rx="8" fill="#ffffff"/>
+  <rect x="388" y="216" width="16" height="188" rx="8" fill="#ffffff"/>
+  <circle cx="116" cy="208" r="8" fill="#d4af37"/>
+  <circle cx="396" cy="208" r="8" fill="#d4af37"/>
+  <!-- badan bangunan -->
+  <rect x="136" y="264" width="240" height="140" rx="10" fill="#ffffff"/>
+  <!-- pintu -->
+  <path d="M236 404 V360 A20 20 0 0 1 276 360 V404 Z" fill="#14532d"/>
+</svg>

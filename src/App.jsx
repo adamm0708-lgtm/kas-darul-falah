@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase, supabaseConfigured } from './lib/supabase';
+import InstallPrompt from './components/InstallPrompt.jsx';
 
 const money = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 const dateFmt = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -297,6 +298,7 @@ export default function App() {
 
   return (
     <main className="page-shell">
+      <InstallPrompt />
       <header className="topbar">
         <div className="brand-mark">DF</div>
         <div><p className="eyebrow">LAPORAN KEUANGAN LANGGAR</p><h1>Waqaf Darul Falah</h1><p className="muted">Ledok Kidul Dalem · Bangil</p></div>

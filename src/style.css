@@ -94,3 +94,14 @@
 .daily-chart{background:repeating-linear-gradient(to top,transparent 0,transparent 39px,#e8efe9 40px);border-bottom:1px solid #cbd9ce;border-radius:8px 8px 0 0}
 .daily-bars i{min-height:0;box-shadow:0 2px 5px rgba(20,40,25,.16)}
 .chart-legend i{box-shadow:0 1px 4px rgba(0,0,0,.18)}
+
+/* Banner install aplikasi (PWA) */
+.install-prompt{position:fixed;left:16px;right:16px;bottom:16px;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#14532d;color:#fff;border:1px solid #1b6b3a;border-radius:16px;padding:14px 16px;box-shadow:0 12px 32px rgba(20,60,35,.35);max-width:640px;margin:0 auto}
+.install-prompt-icon{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:#d4af37;color:#14532d;display:grid;place-items:center;font:800 15px Manrope}
+.install-prompt-text{display:grid;gap:3px;flex:1;min-width:0}
+.install-prompt-text strong{font:800 14px Manrope}
+.install-prompt-text span{font-size:12px;color:#cfe6d4;line-height:1.5}
+.install-prompt-button{white-space:nowrap;background:#d4af37;color:#14532d}
+.install-prompt-close{flex:0 0 auto;border:0;background:transparent;color:#bcd8c2;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px}
+.install-prompt-ios-help{flex-basis:100%;margin:2px 0 0;font-size:12px;color:#dcefe0;line-height:1.6}
+@media(max-width:700px){.install-prompt{left:12px;right:12px;bottom:12px}.install-prompt-button{flex:1}}
