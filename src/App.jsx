@@ -80,6 +80,10 @@ export default function App() {
   const [newCategory, setNewCategory] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newAmount, setNewAmount] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [rowMessage, setRowMessage] = useState('');
 
   async function verifyAdmin(session) {
     if (!session?.user) {
@@ -170,7 +174,9 @@ export default function App() {
     setTransactions(data ?? []);
   }
 
-  async function handleAddTransaction(event) {
+  /* Simpan transaksi: tambah baru (insert) atau ubah yang sudah ada (update).
+     Dipakai form yang sama; editingId null = tambah, terisi = ubah. */
+  async function handleSaveTransaction(event) {
     event.preventDefault();
     if (!isAdmin) return;
     if (!newCategory) {
@@ -190,22 +196,28 @@ export default function App() {
       setSavingTransaction(false);
       return;
     }
-    const { error: insertError } = await supabase.from('transactions').insert({
+    const payload = {
       transaction_date: newDate,
       transaction_type: newType,
       category_id: Number(newCategory),
       description: newDescription.trim(),
-      amount,
-      created_by: userResult.user.id
-    });
-    if (insertError) {
-      setFormMessage('Gagal menyimpan: ' + insertError.message);
+      amount
+    };
+    let saveError = null;
+    if (editingId) {
+      ({ error: saveError } = await supabase.from('transactions').update(payload).eq('id', editingId));
+    } else {
+      ({ error: saveError } = await supabase.from('transactions').insert({ ...payload, created_by: userResult.user.id }));
+    }
+    if (saveError) {
+      setFormMessage('Gagal menyimpan: ' + saveError.message);
       setSavingTransaction(false);
       return;
     }
     try {
       await refreshTransactions();
-      setFormMessage('Transaksi berhasil disimpan.');
+      setFormMessage(editingId ? 'Transaksi berhasil diubah.' : 'Transaksi berhasil disimpan.');
+      setEditingId(null);
       setNewDescription('');
       setNewAmount('');
       setNewDate(new Date().toISOString().slice(0, 10));
@@ -216,6 +228,48 @@ export default function App() {
       setFormMessage('Transaksi tersimpan, tetapi daftar gagal diperbarui: ' + refreshError.message);
     }
     setSavingTransaction(false);
+  }
+
+  function startEditTransaction(t) {
+    setEditingId(t.id);
+    setNewDate(String(t.transaction_date).slice(0, 10));
+    setNewType(t.transaction_type);
+    setNewCategory(String(t.category_id));
+    setNewDescription(t.description || '');
+    setNewAmount(String(t.amount ?? ''));
+    setFormMessage('');
+    setRowMessage('');
+    setDeleteConfirmId(null);
+    setShowAddForm(true);
+  }
+
+  function cancelEditTransaction() {
+    setEditingId(null);
+    setShowAddForm(false);
+    setFormMessage('');
+  }
+
+  async function handleDeleteTransaction(id) {
+    if (!isAdmin) return;
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      return;
+    }
+    setDeletingId(id);
+    setRowMessage('');
+    const { error: deleteError } = await supabase.from('transactions').delete().eq('id', id);
+    setDeletingId(null);
+    setDeleteConfirmId(null);
+    if (deleteError) {
+      setRowMessage('Gagal menghapus: ' + deleteError.message);
+      return;
+    }
+    try {
+      await refreshTransactions();
+      setRowMessage('Transaksi berhasil dihapus.');
+    } catch (refreshError) {
+      setRowMessage('Transaksi terhapus, tetapi daftar gagal diperbarui: ' + refreshError.message);
+    }
   }
 
   async function handleLogout() {
@@ -398,17 +452,17 @@ export default function App() {
             : <button className="outline-button" onClick={() => { setShowLogin(v => !v); setLoginMessage(''); }}>Masuk Admin</button>}
         </div>
       </section>
-      {isAdmin && <section className="admin-welcome"><div className="admin-welcome-head"><div><strong>Mode Admin aktif</strong><span>{adminEmail}</span></div><button className="primary-button" type="button" onClick={() => { setShowAddForm(v => !v); setFormMessage(''); }}>{showAddForm ? 'Tutup Form' : '+ Tambah Transaksi'}</button></div><p>Catat pemasukan atau pengeluaran baru.</p></section>}
+      {isAdmin && <section className="admin-welcome"><div className="admin-welcome-head"><div><strong>Mode Admin aktif</strong><span>{adminEmail}</span></div><button className="primary-button" type="button" onClick={() => { const opening = !showAddForm; setShowAddForm(opening); setFormMessage(''); if (opening) { setEditingId(null); setNewDescription(''); setNewAmount(''); setNewDate(new Date().toISOString().slice(0, 10)); setNewType('income'); setNewCategory(''); } }}>{showAddForm ? 'Tutup Form' : '+ Tambah Transaksi'}</button></div><p>Catat pemasukan atau pengeluaran baru, atau ubah dan hapus catatan yang sudah ada dari tabel riwayat di bawah.</p></section>}
       {isAdmin && showAddForm && <section className="login-panel transaction-form-panel">
-        <div><p className="eyebrow">BUKU KAS</p><h2>Tambah Transaksi</h2><p className="muted">Catatan baru akan langsung tersimpan ke database.</p></div>
-        <form className="login-form" onSubmit={handleAddTransaction}>
+        <div><p className="eyebrow">BUKU KAS</p><h2>{editingId ? 'Ubah Transaksi' : 'Tambah Transaksi'}</h2><p className="muted">{editingId ? 'Perubahan langsung tersimpan ke database.' : 'Catatan baru akan langsung tersimpan ke database.'}</p></div>
+        <form className="login-form" onSubmit={handleSaveTransaction}>
           <label>Tanggal<input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} required /></label>
           <label>Jenis transaksi<select value={newType} onChange={e => setNewType(e.target.value)}><option value="income">Pemasukan</option><option value="expense">Pengeluaran</option></select></label>
           <label>Kategori<select value={newCategory} onChange={e => setNewCategory(e.target.value)} required><option value="">Pilih kategori</option>{categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name ?? cat.category_name ?? cat.title ?? 'Kategori'}</option>)}</select></label>
           <label>Keterangan<input type="text" value={newDescription} onChange={e => setNewDescription(e.target.value)} placeholder="Contoh: Infaq bulanan" required maxLength={200} /></label>
           <label>Jumlah (Rupiah)<input type="number" min="1" step="1" inputMode="numeric" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="Contoh: 100000" required /></label>
           {formMessage && <p className="login-message">{formMessage}</p>}
-          <div className="login-actions"><button className="primary-button" type="submit" disabled={savingTransaction}>{savingTransaction ? 'Menyimpan…' : 'Simpan Transaksi'}</button><button className="cancel-button" type="button" onClick={() => { setShowAddForm(false); setFormMessage(''); }}>Batal</button></div>
+          <div className="login-actions"><button className="primary-button" type="submit" disabled={savingTransaction}>{savingTransaction ? 'Menyimpan…' : (editingId ? 'Simpan Perubahan' : 'Simpan Transaksi')}</button><button className="cancel-button" type="button" onClick={cancelEditTransaction}>Batal</button></div>
         </form>
       </section>}
       {showLogin && !isAdmin && <section className="login-panel">
@@ -500,16 +554,23 @@ export default function App() {
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
+        {rowMessage && <p className="login-message row-message">{rowMessage}</p>}
         {loading ? <div className="empty-state"><h3>Memuat data transaksi…</h3></div> :
           visible.length === 0 ? <div className="empty-state"><div className="empty-icon">▤</div><h3>Belum ada transaksi</h3><p>Belum ditemukan catatan untuk periode yang dipilih.</p></div> :
           <div className="table-wrap"><table className="transactions-table">
-            <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Jumlah</th></tr></thead>
+            <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Jenis</th><th className="amount-cell">Jumlah</th>{isAdmin && <th className="actions-cell">Aksi</th>}</tr></thead>
             <tbody>{paginatedVisible.map(t => <tr key={t.id}>
               <td>{dateFmt.format(new Date(t.transaction_date + 'T00:00:00'))}</td>
               <td className="description-cell">{t.description || '-'}</td>
               <td><span className={'cat-chip ' + catTone(categoryMap.get(String(t.category_id)))}><i />{categoryMap.get(String(t.category_id)) || '-'}</span></td>
               <td><span className={'type-pill ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{t.transaction_type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</span></td>
               <td className={'amount-cell ' + (t.transaction_type === 'income' ? 'income' : 'expense')}>{money.format(Number(t.amount) || 0)}</td>
+              {isAdmin && <td className="actions-cell"><div className="row-actions">
+                <button type="button" className="action-button" onClick={() => startEditTransaction(t)}>Ubah</button>
+                {deleteConfirmId === t.id
+                  ? <><button type="button" className="action-button danger-confirm" disabled={deletingId === t.id} onClick={() => handleDeleteTransaction(t.id)}>{deletingId === t.id ? 'Menghapus…' : 'Ya, hapus'}</button><button type="button" className="action-button" onClick={() => setDeleteConfirmId(null)}>Batal</button></>
+                  : <button type="button" className="action-button danger" onClick={() => handleDeleteTransaction(t.id)}>Hapus</button>}
+              </div></td>}
             </tr>)}</tbody>
           </table></div>}
         {!loading && visible.length > 0 && <div className="history-pagination">

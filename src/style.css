@@ -130,6 +130,16 @@ button{font-family:inherit}
 .transactions-table .amount-cell{text-align:right;font-weight:700;white-space:nowrap}
 .transactions-table .amount-cell.income{color:var(--income)}
 .transactions-table .amount-cell.expense{color:var(--expense)}
+.transactions-table th.actions-cell,.transactions-table td.actions-cell{text-align:right}
+.row-actions{display:flex;gap:8px;justify-content:flex-end;white-space:nowrap}
+.action-button{border:1px solid #d5e1d7;border-radius:8px;padding:7px 11px;background:#fff;color:#245d35;font:700 12px 'DM Sans',sans-serif;cursor:pointer;transition:background .15s}
+.action-button:hover:not(:disabled){background:#f0f7f1}
+.action-button:disabled{opacity:.5;cursor:wait}
+.action-button.danger{color:#b3261e;border-color:#f0c4c0}
+.action-button.danger:hover:not(:disabled){background:#fdf0ef}
+.action-button.danger-confirm{background:#b3261e;border-color:#b3261e;color:#fff}
+.action-button.danger-confirm:hover:not(:disabled){background:#931f18}
+.row-message{margin:12px 0 0}
 .type-pill{display:inline-block;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:700;white-space:nowrap}
 .type-pill.income{background:#e8f5eb;color:#287341}
 .type-pill.expense{background:#fff0ed;color:#a64a36}
