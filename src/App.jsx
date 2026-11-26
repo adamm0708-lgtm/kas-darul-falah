@@ -317,8 +317,48 @@ export default function App() {
       if (t.transaction_type === 'expense') item.expense += Number(t.amount || 0);
       byCategory.set(category, item);
     });
-    return { monthTransactions, income, expense, opening, closing: opening + income - expense, byCategory, selectedYear, selectedMonth };
-  }, [transactions, reportMonth, categoryMap]);
+    // Saldo per kategori: saldo awal = seluruh transaksi kategori itu sebelum
+    // bulan terpilih, saldo akhir = saldo awal + pemasukan - pengeluaran bulan
+    // ini. Semua kategori ditampilkan, termasuk yang tidak ada transaksinya
+    // di bulan ini, supaya saldo akhirnya tetap terlihat.
+    const byCategoryBalance = categories
+      .slice()
+      .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+      .map(cat => {
+        const name = cat.name ?? cat.category_name ?? cat.title ?? 'Kategori';
+        let openingCat = 0;
+        let incomeCat = 0;
+        let expenseCat = 0;
+        transactions.forEach(t => {
+          if (String(t.category_id) !== String(cat.id)) return;
+          const amount = Number(t.amount || 0);
+          const month = String(t.transaction_date).slice(0, 7);
+          if (month < reportMonth) openingCat += t.transaction_type === 'income' ? amount : -amount;
+          else if (month === reportMonth) {
+            if (t.transaction_type === 'income') incomeCat += amount;
+            if (t.transaction_type === 'expense') expenseCat += amount;
+          }
+        });
+        return { name, opening: openingCat, income: incomeCat, expense: expenseCat, closing: openingCat + incomeCat - expenseCat };
+      });
+    if (transactions.some(t => !categoryMap.has(String(t.category_id)))) {
+      let openingCat = 0;
+      let incomeCat = 0;
+      let expenseCat = 0;
+      transactions.forEach(t => {
+        if (categoryMap.has(String(t.category_id))) return;
+        const amount = Number(t.amount || 0);
+        const month = String(t.transaction_date).slice(0, 7);
+        if (month < reportMonth) openingCat += t.transaction_type === 'income' ? amount : -amount;
+        else if (month === reportMonth) {
+          if (t.transaction_type === 'income') incomeCat += amount;
+          if (t.transaction_type === 'expense') expenseCat += amount;
+        }
+      });
+      byCategoryBalance.push({ name: 'Tanpa kategori', opening: openingCat, income: incomeCat, expense: expenseCat, closing: openingCat + incomeCat - expenseCat });
+    }
+    return { monthTransactions, income, expense, opening, closing: opening + income - expense, byCategory, byCategoryBalance, selectedYear, selectedMonth };
+  }, [transactions, reportMonth, categories, categoryMap]);
 
 
   function downloadMonthlyPdf() {
@@ -494,13 +534,35 @@ export default function App() {
           <button type="button" className={reportTab === 'details' ? 'report-tab active' : 'report-tab'} onClick={() => setReportTab('details')}>Rincian Transaksi</button>
           <button type="button" className={reportTab === 'charts' ? 'report-tab active' : 'report-tab'} onClick={() => setReportTab('charts')}>Grafik</button>
         </div>
-        {reportTab === 'summary' && <div className="report-summary-grid">
+        {reportTab === 'summary' && <><div className="report-summary-grid">
           <div className="sum-opening"><span>Saldo awal</span><strong>{money.format(monthlyReport.opening)}</strong></div>
           <div className="sum-income"><span>Pemasukan</span><strong>{money.format(monthlyReport.income)}</strong></div>
           <div className="sum-expense"><span>Pengeluaran</span><strong>{money.format(monthlyReport.expense)}</strong></div>
           <div className="sum-closing"><span>Saldo akhir</span><strong>{money.format(monthlyReport.closing)}</strong></div>
           <div className="report-summary-note">Total {monthlyReport.monthTransactions.length} transaksi tercatat pada bulan ini.</div>
-        </div>}
+        </div>
+        {monthlyReport.byCategoryBalance.length > 0 && (<>
+          <div className="report-detail-heading"><h3>Rekap kategori</h3><span>Saldo akhir per kategori</span></div>
+          <div className="table-wrap"><table className="transactions-table">
+            <thead><tr><th>Kategori</th><th className="amount-cell">Saldo Awal</th><th className="amount-cell">Pemasukan</th><th className="amount-cell">Pengeluaran</th><th className="amount-cell">Saldo Akhir</th></tr></thead>
+            <tbody>{monthlyReport.byCategoryBalance.map(row => <tr key={row.name}>
+              <td className="description-cell">{row.name}</td>
+              <td className="amount-cell">{money.format(row.opening)}</td>
+              <td className="amount-cell income">{row.income ? money.format(row.income) : '-'}</td>
+              <td className="amount-cell expense">{row.expense ? money.format(row.expense) : '-'}</td>
+              <td className="amount-cell">{money.format(row.closing)}</td>
+            </tr>)}</tbody>
+            <tfoot><tr>
+              <td className="description-cell">Total</td>
+              <td className="amount-cell">{money.format(monthlyReport.byCategoryBalance.reduce((s, r) => s + r.opening, 0))}</td>
+              <td className="amount-cell income">{money.format(monthlyReport.income)}</td>
+              <td className="amount-cell expense">{money.format(monthlyReport.expense)}</td>
+              <td className="amount-cell">{money.format(monthlyReport.closing)}</td>
+            </tr></tfoot>
+          </table></div>
+          <p className="chart-footnote">Saldo awal per kategori dihitung dari seluruh transaksi kategori itu sebelum bulan yang dipilih; saldo akhir = saldo awal + pemasukan − pengeluaran bulan ini.</p>
+        </>)}
+      </>}
         {reportTab === 'details' && <>
           <div className="report-detail-heading"><h3>Rincian transaksi bulan ini</h3><span>{monthlyReport.monthTransactions.length} transaksi</span></div>
           {monthlyReport.monthTransactions.length === 0 ? <div className="empty-state"><p>Belum ada transaksi pada bulan yang dipilih.</p></div> :
